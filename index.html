@@ -247,6 +247,23 @@
     </div>
   </div>
 
+  <!-- GALLERY IMAGE VIEWER MODAL -->
+  <div id="image-viewer-modal" class="fixed inset-0 bg-black/95 z-[200] hidden flex-col items-center justify-center fade-in">
+    <!-- Top Bar -->
+    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-[210]">
+      <button onclick="closeImageViewer()" class="w-12 h-12 bg-slate-800/80 rounded-full flex items-center justify-center text-white active:scale-95 transition">
+        <i class="fa-solid fa-arrow-left text-xl"></i>
+      </button>
+      <a id="download-photo-btn" href="#" download="utm-ar-photo.jpg" class="px-6 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-full transition shadow-lg flex items-center">
+        <i class="fa-solid fa-download mr-2"></i> Save
+      </a>
+    </div>
+    <!-- Image Container -->
+    <div class="w-full h-full flex items-center justify-center p-4">
+      <img id="viewer-image" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+    </div>
+  </div>
+
   <script>
     function renderGallery() {
       const container = document.getElementById('gallery-container');
@@ -260,7 +277,7 @@
           const checkDate = appState[key].checkInDate || "Previous Check-in";
           
           container.innerHTML += `
-            <div class="glass p-2 rounded-xl relative border border-white/10 flex flex-col">
+            <div onclick="openImageViewer('${key}')" class="glass p-2 rounded-xl relative border border-white/10 flex flex-col cursor-pointer transform hover:scale-[1.02] transition">
               <img src="${appState[key].photo}" class="w-full h-36 object-cover rounded-lg shadow-md mb-2">
               <div class="px-1 pb-1">
                 <h3 class="text-sm font-bold text-white truncate">${place.title}</h3>
@@ -280,6 +297,32 @@
         `;
       }
     }
+
+    function openImageViewer(placeKey) {
+      const place = placesData[placeKey];
+      const photoDataUrl = appState[placeKey].photo;
+      
+      const modal = document.getElementById('image-viewer-modal');
+      const viewerImg = document.getElementById('viewer-image');
+      const downloadBtn = document.getElementById('download-photo-btn');
+      
+      viewerImg.src = photoDataUrl;
+      
+      // Setup download filename
+      const filename = place.title.replace(/\s+/g, '-').toLowerCase() + '-memory.jpg';
+      downloadBtn.href = photoDataUrl;
+      downloadBtn.download = filename;
+      
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
+
+    function closeImageViewer() {
+      const modal = document.getElementById('image-viewer-modal');
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+      document.getElementById('viewer-image').src = '';
+    }
   </script>
   
   <!-- ========================================== -->
@@ -291,8 +334,9 @@
         <i class="fa-solid fa-location-dot text-4xl text-indigo-400 z-10"></i>
         <div class="absolute inset-0 border-4 border-indigo-500/50 rounded-full animate-ping"></div>
       </div>
-      <h2 class="text-2xl font-bold mb-2">Acquiring Location</h2>
-      <p class="text-slate-300 text-sm mb-6">You must be within 50 meters of the target location to unlock the AR scanner.</p>
+      <h2 class="text-2xl font-bold mb-1">Navigating to</h2>
+      <h3 id="gps-target-name" class="text-lg text-indigo-300 font-semibold mb-4">Target Name</h3>
+      <p class="text-slate-300 text-sm mb-6">You must be within 50 meters of the location to unlock the AR scanner.</p>
       
       <div class="bg-slate-800/80 rounded-xl p-5 mb-6 border border-white/5 shadow-inner">
         <p class="text-xs text-indigo-300 uppercase tracking-widest mb-2 font-semibold">Distance to Target</p>
@@ -317,7 +361,9 @@
     function initiateGpsCheck(targetPlace) {
       const gpsScreen = document.getElementById('screen-gps');
       const distanceText = document.getElementById('gps-distance-text');
+      const targetNameText = document.getElementById('gps-target-name');
       
+      targetNameText.innerText = targetPlace.title;
       gpsScreen.style.display = 'flex';
       gpsScreen.classList.remove('hidden');
       distanceText.innerText = 'Calculating...';
